@@ -1,24 +1,12 @@
-import { Router, Request, Response } from 'express'; 
-const evaluadoRouter:Router = Router(); 
+import { Router } from 'express';
+import * as evaluadoController from '../controllers/evaluadoController';
 
-evaluadoRouter.get('/getallevaluados', (req:Request, res:Response) => { 
-    res.send('Obtener lista con todos los evaluados') 
-}) 
+const evaluadoRouter: Router = Router();
 
-evaluadoRouter.post('/crearevaluado', (req:Request, res:Response) => {
-    res.send(`Crear nuevo evaluado con id ${req.body.id}`)
-})
-
-evaluadoRouter.patch('/updateevaluado/:id', (req:Request, res:Response) => {
-    res.send(`Actualizar el evaluado con id ${req.params.id} con el nombre "${req.body.nombre}"`)
-})
-
-evaluadoRouter.delete('/deleteevaluado', (req:Request, res:Response) => {
-    res.send(`Borrar el evaluado con id ${req.body.id}`) 
-}) 
-
-evaluadoRouter.get('/getevaluado/:id', (req:Request, res:Response) => { 
-    res.send(`Obtener evaluado con id ${req.params.id}`) 
-}) 
+evaluadoRouter.get('/getallevaluados', evaluadoController.getAllEvaluados);
+evaluadoRouter.post('/crearevaluado', evaluadoController.createEvaluado);
+evaluadoRouter.patch('/updateevaluado/:id', evaluadoController.modifyEvaluado);
+evaluadoRouter.delete('/deleteevaluado', evaluadoController.deleteEvaluado);
+evaluadoRouter.get('/getevaluado/:id', evaluadoController.getEvaluadoById);
 
 export default evaluadoRouter;
