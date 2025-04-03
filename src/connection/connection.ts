@@ -1,5 +1,7 @@
 import { Sequelize } from "sequelize-typescript";
-
+import { Evaluado } from "../models/evaluado";
+import { Poblacion } from "../models/poblacion";
+import { Zona } from "../models/zona";
 
 const connection = new Sequelize({
   database: 'gradtrack_db',
@@ -8,7 +10,9 @@ const connection = new Sequelize({
   password: '123456',
   storage: ':memory:',
   models: [
-
+    Evaluado, 
+    Poblacion, 
+    Zona
   ]
 });
 
