@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteEvaluado = exports.modifyEvaluado = exports.getEvaluadoById = exports.getAllEvaluados = exports.createEvaluado = void 0;
+exports.getNivelAlerta = exports.getGraduacionMujeres = exports.getGraduacionHombres = exports.getPorcentajeGraduacion = exports.getTotalEvaluados = exports.getEdadPoblacion = exports.getPoblacionesByZona = exports.getZonas = exports.deleteEvaluado = exports.modifyEvaluado = exports.getEvaluadoById = exports.getAllEvaluados = exports.createEvaluado = void 0;
 const evaluado_1 = require("../models/evaluado");
 const poblacion_1 = require("../models/poblacion");
 const zona_1 = require("../models/zona");
@@ -143,3 +143,161 @@ const deleteEvaluado = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
 });
 exports.deleteEvaluado = deleteEvaluado;
+const getZonas = (_req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const zonas = yield zona_1.Zona.findAll();
+        const zonasFiltradas = zonas.map(zona => ({
+            id: zona.id,
+            nombre: zona.nombre,
+            estado: zona.estado,
+        }));
+        res.status(200).json({ status: "success", payload: zonasFiltradas });
+    }
+    catch (error) {
+        const err = error;
+        res.status(500).json({ status: "error", message: err.message });
+    }
+});
+exports.getZonas = getZonas;
+const getPoblacionesByZona = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const poblaciones = yield poblacion_1.Poblacion.findAll({ where: { zonaId: req.params.zonaId } });
+        const filtradas = poblaciones.map(poblacion => ({
+            id: poblacion.id,
+            edad: poblacion.edad,
+            nivelSocioeconomico: poblacion.nivelSocioeconomico,
+            zonaId: poblacion.zonaId,
+        }));
+        res.status(200).json({ status: "success", payload: filtradas });
+    }
+    catch (error) {
+        const err = error;
+        res.status(500).json({ status: "error", message: err.message });
+    }
+});
+exports.getPoblacionesByZona = getPoblacionesByZona;
+const getEdadPoblacion = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const poblacion = yield poblacion_1.Poblacion.findByPk(req.params.poblacionId);
+        res.status(200).json({ status: "success", edad: poblacion === null || poblacion === void 0 ? void 0 : poblacion.edad });
+    }
+    catch (error) {
+        const err = error;
+        res.status(500).json({ status: "error", message: err.message });
+    }
+});
+exports.getEdadPoblacion = getEdadPoblacion;
+const getTotalEvaluados = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const total = yield evaluado_1.Evaluado.count({ where: { poblacionId: req.params.poblacionId } });
+        res.status(200).json({ status: "success", total });
+    }
+    catch (error) {
+        const err = error;
+        res.status(500).json({ status: "error", message: err.message });
+    }
+});
+exports.getTotalEvaluados = getTotalEvaluados;
+const getPorcentajeGraduacion = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const total = yield evaluado_1.Evaluado.count({ where: { poblacionId: req.params.poblacionId } });
+        const graduados = yield evaluado_1.Evaluado.count({ where: { poblacionId: req.params.poblacionId, graduado: "SI" } });
+        const porcentajeGraduados = total ? (graduados / total) * 100 : 0;
+        res.status(200).json({
+            status: "success",
+            graduados: porcentajeGraduados,
+            noGraduados: 100 - porcentajeGraduados,
+        });
+    }
+    catch (error) {
+        const err = error;
+        res.status(500).json({ status: "error", message: err.message });
+    }
+});
+exports.getPorcentajeGraduacion = getPorcentajeGraduacion;
+const getGraduacionHombres = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const hombres = yield evaluado_1.Evaluado.findAll({
+            where: { poblacionId: req.params.poblacionId, genero: 'Hombre' }
+        });
+        const totalHombres = hombres.length;
+        if (totalHombres === 0) {
+            res.status(200).json({
+                status: "success",
+                totalHombres,
+                porcentajeGraduados: 0,
+                porcentajeNoGraduados: 0
+            });
+            return;
+        }
+        const graduados = hombres.filter(e => e.graduado === "SI").length;
+        const noGraduados = totalHombres - graduados;
+        const porcentajeGraduados = (graduados / totalHombres) * 100 || 0;
+        const porcentajeNoGraduados = (noGraduados / totalHombres) * 100 || 0;
+        res.status(200).json({
+            status: "success",
+            totalHombres,
+            porcentajeGraduados,
+            porcentajeNoGraduados
+        });
+    }
+    catch (error) {
+        const err = error;
+        res.status(500).json({ status: "error", message: err.message });
+    }
+});
+exports.getGraduacionHombres = getGraduacionHombres;
+const getGraduacionMujeres = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const mujeres = yield evaluado_1.Evaluado.findAll({
+            where: { poblacionId: req.params.poblacionId, genero: 'Mujer' }
+        });
+        const totalMujeres = mujeres.length;
+        if (totalMujeres === 0) {
+            res.status(200).json({
+                status: "success",
+                totalMujeres,
+                porcentajeGraduados: 0,
+                porcentajeNoGraduados: 0
+            });
+            return;
+        }
+        const graduados = mujeres.filter(e => e.graduado === "SI").length;
+        const noGraduados = totalMujeres - graduados;
+        const porcentajeGraduados = (graduados / totalMujeres) * 100 || 0;
+        const porcentajeNoGraduados = (noGraduados / totalMujeres) * 100 || 0;
+        res.status(200).json({
+            status: "success",
+            totalMujeres,
+            porcentajeGraduados,
+            porcentajeNoGraduados
+        });
+    }
+    catch (error) {
+        const err = error;
+        res.status(500).json({ status: "error", message: err.message });
+    }
+});
+exports.getGraduacionMujeres = getGraduacionMujeres;
+const getNivelAlerta = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const total = yield evaluado_1.Evaluado.count({ where: { poblacionId: req.params.poblacionId } });
+        const graduados = yield evaluado_1.Evaluado.count({ where: { poblacionId: req.params.poblacionId, graduado: "SI" } });
+        const porcentaje = total ? (graduados / total) * 100 : 0;
+        let nivel = '';
+        if (porcentaje < 20)
+            nivel = 'Grave';
+        else if (porcentaje < 50)
+            nivel = 'Alto';
+        else if (porcentaje < 80)
+            nivel = 'Bajo';
+        else
+            nivel = 'Muy Bajo';
+        res.status(200).json({ status: "success", nivel });
+    }
+    catch (error) {
+        const err = error;
+        res.status(500).json({ status: "error", message: err.message });
+    }
+});
+exports.getNivelAlerta = getNivelAlerta;

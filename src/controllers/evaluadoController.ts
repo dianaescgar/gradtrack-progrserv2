@@ -135,3 +135,167 @@ try {
   });
 }
 };
+
+export const getZonas: RequestHandler = async (_req, res) => {
+  try {
+    const zonas = await Zona.findAll();
+
+    const zonasFiltradas = zonas.map(zona => ({
+      id: zona.id,
+      nombre: zona.nombre,
+      estado: zona.estado,
+    }));
+
+    res.status(200).json({ status: "success", payload: zonasFiltradas });
+  } catch (error) {
+    const err = error as Error;
+    res.status(500).json({ status: "error", message: err.message });
+  }
+};
+
+export const getPoblacionesByZona: RequestHandler = async (req, res) => {
+  try {
+    const poblaciones = await Poblacion.findAll({ where: { zonaId: req.params.zonaId } });
+
+    const filtradas = poblaciones.map(poblacion => ({
+      id: poblacion.id,
+      edad: poblacion.edad,
+      nivelSocioeconomico: poblacion.nivelSocioeconomico,
+      zonaId: poblacion.zonaId,
+    }));
+
+    res.status(200).json({ status: "success", payload: filtradas });
+  } catch (error) {
+    const err = error as Error;
+    res.status(500).json({ status: "error", message: err.message });
+  }
+};
+
+
+export const getEdadPoblacion: RequestHandler = async (req, res) => {
+  try {
+    const poblacion = await Poblacion.findByPk(req.params.poblacionId);
+    res.status(200).json({ status: "success", edad: poblacion?.edad });
+  } catch (error) {
+    const err = error as Error;
+    res.status(500).json({ status: "error", message: err.message });
+  }
+};
+
+export const getTotalEvaluados: RequestHandler = async (req, res) => {
+  try {
+    const total = await Evaluado.count({ where: { poblacionId: req.params.poblacionId } });
+    res.status(200).json({ status: "success", total });
+  } catch (error) {
+    const err = error as Error;
+    res.status(500).json({ status: "error", message: err.message });
+  }
+};
+
+export const getPorcentajeGraduacion: RequestHandler = async (req, res) => {
+  try {
+    const total = await Evaluado.count({ where: { poblacionId: req.params.poblacionId } });
+    const graduados = await Evaluado.count({ where: { poblacionId: req.params.poblacionId, graduado: "SI"} });
+    const porcentajeGraduados = total ? (graduados / total) * 100 : 0;
+    res.status(200).json({
+      status: "success",
+      graduados: porcentajeGraduados,
+      noGraduados: 100 - porcentajeGraduados,
+    });
+  } catch (error) {
+    const err = error as Error;
+    res.status(500).json({ status: "error", message: err.message });
+  }
+};
+
+export const getGraduacionHombres: RequestHandler = async (req, res): Promise<void> => {
+  try {
+    const hombres = await Evaluado.findAll({
+      where: { poblacionId: req.params.poblacionId, genero: 'Hombre' }
+    });
+
+    const totalHombres = hombres.length;
+    
+    if (totalHombres === 0) {
+      res.status(200).json({
+        status: "success",
+        totalHombres,
+        porcentajeGraduados: 0,
+        porcentajeNoGraduados: 0
+      });
+      return; 
+    }
+
+    const graduados = hombres.filter(e => e.graduado === "SI").length;
+    const noGraduados = totalHombres - graduados;
+
+    const porcentajeGraduados = (graduados / totalHombres) * 100 || 0;
+    const porcentajeNoGraduados = (noGraduados / totalHombres) * 100 || 0;
+
+    res.status(200).json({
+      status: "success",
+      totalHombres,
+      porcentajeGraduados,
+      porcentajeNoGraduados
+    });
+  } catch (error) {
+    const err = error as Error;
+    res.status(500).json({ status: "error", message: err.message });
+  }
+};
+
+export const getGraduacionMujeres: RequestHandler = async (req, res): Promise<void> => {
+  try {
+    const mujeres = await Evaluado.findAll({
+      where: { poblacionId: req.params.poblacionId, genero: 'Mujer' }
+    });
+
+    const totalMujeres = mujeres.length;
+
+    if (totalMujeres === 0) {
+      res.status(200).json({
+        status: "success",
+        totalMujeres,
+        porcentajeGraduados: 0,
+        porcentajeNoGraduados: 0
+      });
+      return; 
+    }
+
+    const graduados = mujeres.filter(e => e.graduado === "SI").length;
+    const noGraduados = totalMujeres - graduados;
+
+    const porcentajeGraduados = (graduados / totalMujeres) * 100 || 0;
+    const porcentajeNoGraduados = (noGraduados / totalMujeres) * 100 || 0;
+
+    res.status(200).json({
+      status: "success",
+      totalMujeres,
+      porcentajeGraduados,
+      porcentajeNoGraduados
+    });
+  } catch (error) {
+    const err = error as Error;
+    res.status(500).json({ status: "error", message: err.message });
+  }
+};
+
+
+export const getNivelAlerta: RequestHandler = async (req, res) => {
+  try {
+    const total = await Evaluado.count({ where: { poblacionId: req.params.poblacionId } });
+    const graduados = await Evaluado.count({ where: { poblacionId: req.params.poblacionId, graduado: "SI" } });
+    const porcentaje = total ? (graduados / total) * 100 : 0;
+
+    let nivel = '';
+    if (porcentaje < 20) nivel = 'Grave';
+    else if (porcentaje < 50) nivel = 'Alto';
+    else if (porcentaje < 80) nivel = 'Bajo';
+    else nivel = 'Muy Bajo';
+
+    res.status(200).json({ status: "success", nivel });
+  } catch (error) {
+    const err = error as Error;
+    res.status(500).json({ status: "error", message: err.message });
+  }
+};
